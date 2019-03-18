@@ -70,6 +70,14 @@ and now… finally…
         stable/cert-manager
 
 
+cd example app
+draft create
+draft up
+
+Swap the templates/ingress.yaml and enable ingress in values.yaml 
+
+draft up
+
 kubectl get pods
 draft connect
 open localhost:33587
