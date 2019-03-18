@@ -143,37 +143,44 @@ Edit this `cluster-issuer.yaml` file
 
 - and install fake root from https://letsencrypt.org/docs/staging-environment/
 
-Swap the templates/ingress.yaml
-Set basedomain workshop.cloudgeni.us in values.yaml
-and Enable ingress in values.yaml
-
-draft up
+## Change app.yaml to request TLS cert
 
 cd example app
-draft create
+
+- Swap the templates/ingress.yaml with ingress-tls.yaml
+
+- Set basedomain workshop.cloudgeni.us in values.yaml and enable ingress in values.yaml
+
+```yaml
+ingress:
+  enabled: true
+basedomain: workshop.cloudgeni.us
+```
+
+or handle ingress via values.yaml like this.
+
+```yaml
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    kubernetes.io/tls-acme: "true"
+
+  path: /
+
+  hosts:
+    - example-erlang.workshop.cloudgeni.us
+
+  tls:
+    - secretName: example-erlang.workshop.cloudgeni.us
+      hosts:
+        - example-erlang.workshop.cloudgeni.us
+```
+
+debug helm indentation if needed with a dry run
+
+    helm install --debug --dry-run ./charts/example-erlang
+
+then
+
 draft up
-
-Swap the templates/ingress.yaml
-Set basedomain in values.yaml
-and Enable ingress in values.yaml
-
-draft up
-
-annotate values.yaml
-
-apiVersion: extensions/v1beta1
-kind: Ingress
-metadata:
-name: coursebook-ui
-annotations:
-kubernetes.io/ingress.class: nginx # Add to generate certificates for this ingress
-kubernetes.io/tls-acme: "true"
-spec:
-rules: - host: be.a.cloudgeni.us
-http:
-paths: - backend:
-serviceName: coursebook-ui
-servicePort: 4004
-path: /
-tls: # With this configuration kube-lego will generate a secret in namespace foo called `coursebook-tls` # for the URL `coursebook.cloudgeni.us` - hosts: - "be.a.cloudgeni.us"
-secretName: coursebook-ui-tls
