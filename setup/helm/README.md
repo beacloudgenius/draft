@@ -70,5 +70,30 @@ and now… finally…
         stable/cert-manager
 
 
+kubectl get pods
+draft connect
+open localhost:33587
 
-https://medium.com/@DazWilkin/azure-draft-on-google-container-engine-d1b25530a313
+Update the Application
+
+Now, let's change the output in app.py to output "Hello, Cloud Genius!" instead:
+
+$ cat <<EOF > app.py
+from flask import Flask
+
+app = Flask(__name__)
+
+@app.route("/")
+def hello():
+    return "Hello, Cloud Genius!\n"
+
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=8080)
+EOF
+
+
+
+draft up
+draft connect
+
+draft delete
