@@ -50,12 +50,14 @@ Because we’re using GKE, we can take advantage of GCP’s Container Repository
 
     cat /home/user/creds/oceanic-isotope-233522-b030dceb4b1a.json | docker login -u _json_key --password-stdin https://gcr.io
 
+Notes: https://cloud.google.com/container-registry/docs/advanced-authentication    
+
 and now… finally…
 
 ### initialize draft and set registry to point to gcr
 
     draft init 
-    draft config set registry gcr.io
+    draft config set registry gcr.io/oceanic-isotope-233522
 
 ## Install cert-manager
 
