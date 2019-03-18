@@ -5,7 +5,7 @@
     sudo mv linux-amd64/helm /usr/local/bin
     chmod +x /usr/local/bin/helm
     rm helm*gz linux-amd64
-   
+
     kubectl apply -f https://raw.githubusercontent.com/beacloudgenius/k8s-ingress-exercise/master/ingress-nginx/tiller-rbac.yaml
 
     helm init --service-account tiller --upgrade
@@ -19,11 +19,11 @@
 
     kubectl get svc --watch ng-nginx-ingress-controller
 
-    Make a note of *your* CLUSTER-IP and EXTERNAL-IP addresses.
+    Make a note of *your* EXTERNAL-IP addresses.
 
 ## Set DNS entry
 
-Now that we have an ingress, we need to configure a DNS wildcard record to point to it. You may use any sub-domain name to go with your domain name like I am using `workshop`. 
+Now that we have an ingress, we need to configure a DNS wildcard record to point to it. You may use any sub-domain name to go with your domain name like I am using `workshop`.
 
 In your preferred DNS tool, you will need to associate:
 
@@ -35,29 +35,49 @@ for example, I am using:
 
 verify that with a dig:
 
-    dig you.workshop.cloudgeni.us
+    dig xyzrandomwildcard.workshop.cloudgeni.us
 
-    ; <<>> DiG 9.10.6 <<>> you.workshop.cloudgeni.us
+    ; <<>> DiG 9.10.6 <<>> xyzrandomwildcard.workshop.cloudgeni.us
 
     ;; ANSWER SECTION:
-    you.workshop.cloudgeni.us. 120	IN	A	35.197.75.207
+    xyzrandomwildcard.workshop.cloudgeni.us. 120	IN	A	35.197.75.207
 
 ## Configure Draft
 
-Because we’re using GKE, we can take advantage of GCP’s Container Repository (GCR). You aren’t required to use GCR, but it’s convenient since our Kubernetes cluster is running on GCP too. 
+Because we’re using GKE, we can take advantage of GCP’s Container Repository (GCR). You aren’t required to use GCR, but it’s convenient since our Kubernetes cluster is running on GCP too.
 
 ### Enable docker to login to gcr
 
-    cat /home/user/creds/oceanic-isotope-233522-b030dceb4b1a.json | docker login -u _json_key --password-stdin https://gcr.io
+    cat $HOME/.creds/oceanic-isotope-233522-b030dceb4b1a.json | docker login -u _json_key --password-stdin https://gcr.io
 
-Notes: https://cloud.google.com/container-registry/docs/advanced-authentication    
+Notes: https://cloud.google.com/container-registry/docs/advanced-authentication
 
 and now… finally…
 
 ### initialize draft and set registry to point to gcr
 
-    draft init 
+    draft init
     draft config set registry gcr.io/oceanic-isotope-233522
+
+side note on packs:
+
+`draft init` installs the built-in Draft packs. _If you are interested in creating your own packs_, you can simply create those packs in your local `$(draft home)/packs` directory.
+
+```
+packs/github.com/Azure/draft/packs
+  |
+  |- PACKNAME
+  |     |
+  |     |- charts/
+  |     |    |- Chart.yaml
+  |     |    |- ...
+  |     |- Dockerfile
+  |     |- detect
+  |     |- ...
+  |
+  |- PACK2
+        |-...
+```
 
 ## Install cert-manager
 
@@ -69,15 +89,8 @@ and now… finally…
         --version v0.5.2 \
         stable/cert-manager
 
-
 cd example app
 draft create
-draft up
-
-Swap the templates/ingress.yaml 
-set basedomain in values.yaml
-and enable ingress in values.yaml
-
 draft up
 
 kubectl get pods
@@ -88,20 +101,18 @@ Update the Application
 
 Now, let's change the output in app.py to output "Hello, Cloud Genius!" instead:
 
-$ cat <<EOF > app.py
-from flask import Flask
+    \$ cat <<EOF > app.py
+    from flask import Flask
 
-app = Flask(__name__)
+    app = Flask(**name**)
 
-@app.route("/")
-def hello():
+    @app.route("/")
+    def hello():
     return "Hello, Cloud Genius!\n"
 
-if __name__ == "__main__":
+    if **name** == "**main**":
     app.run(host='0.0.0.0', port=8080)
-EOF
-
-
+    EOF
 
 draft up
 draft connect
@@ -110,7 +121,7 @@ draft delete
 
 ## Enable ingress
 
-Edit values.yaml 
+Edit values.yaml
 
 ```bash
 ingress:
@@ -122,33 +133,47 @@ basedomain: workshop.cloudgeni.us
 
     wget https://raw.githubusercontent.com/beacloudgenius/k8s-ingress-exercise/master/ingress-nginx/cluster-issuer.yaml
 
-edit this file and use your email address
+Edit this `cluster-issuer.yaml` file
 
-    kubectl apply -f cluster-issuer.yaml
+- use your email address not nilesh@cloudgeni.us
+
+- change to staging TLS to avoid rate limit issue during testing.
+
+  https://acme-staging-v02.api.letsencrypt.org/directory
+
+- and install fake root from https://letsencrypt.org/docs/staging-environment/
+
+Swap the templates/ingress.yaml
+Set basedomain workshop.cloudgeni.us in values.yaml
+and Enable ingress in values.yaml
+
+draft up
+
+cd example app
+draft create
+draft up
+
+Swap the templates/ingress.yaml
+Set basedomain in values.yaml
+and Enable ingress in values.yaml
+
+draft up
 
 annotate values.yaml
-
 
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: coursebook-ui
-  annotations:
-    kubernetes.io/ingress.class: nginx
-    # Add to generate certificates for this ingress
-    kubernetes.io/tls-acme: "true"
+name: coursebook-ui
+annotations:
+kubernetes.io/ingress.class: nginx # Add to generate certificates for this ingress
+kubernetes.io/tls-acme: "true"
 spec:
-  rules:
-    - host: be.a.cloudgeni.us
-      http:
-        paths:
-          - backend:
-              serviceName: coursebook-ui
-              servicePort: 4004
-            path: /
-  tls:
-    # With this configuration kube-lego will generate a secret in namespace foo called `coursebook-tls`
-    # for the URL `coursebook.cloudgeni.us`
-    - hosts:
-        - "be.a.cloudgeni.us"
-      secretName: coursebook-ui-tls
+rules: - host: be.a.cloudgeni.us
+http:
+paths: - backend:
+serviceName: coursebook-ui
+servicePort: 4004
+path: /
+tls: # With this configuration kube-lego will generate a secret in namespace foo called `coursebook-tls` # for the URL `coursebook.cloudgeni.us` - hosts: - "be.a.cloudgeni.us"
+secretName: coursebook-ui-tls
