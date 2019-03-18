@@ -1,0 +1,13 @@
+gcloud config set project  oceanic-isotope-233522 
+gcloud config list
+gcloud container clusters get-credentials andromeda --zone us-west1-a
+git clone git@github.com:beacloudgenius/draft.git
+cd draft/examples/example-python/
+draft init 
+draft create
+draft config set registry lvnilesh
+docker login
+draft up
+draft logs 01D68J1WB20RK14ZMPR4Z81E0B
+
+helm install stable/nginx-ingress --name=ng
