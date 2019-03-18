@@ -97,3 +97,48 @@ draft up
 draft connect
 
 draft delete
+
+## Enable ingress
+
+Edit values.yaml 
+
+```bash
+ingress:
+  enabled: true
+basedomain: workshop.cloudgeni.us
+```
+
+## Enable TLS
+
+    wget https://raw.githubusercontent.com/beacloudgenius/k8s-ingress-exercise/master/ingress-nginx/cluster-issuer.yaml
+
+edit this file and use your email address
+
+    kubectl apply -f cluster-issuer.yaml
+
+annotate values.yaml
+
+
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: coursebook-ui
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    # Add to generate certificates for this ingress
+    kubernetes.io/tls-acme: "true"
+spec:
+  rules:
+    - host: be.a.cloudgeni.us
+      http:
+        paths:
+          - backend:
+              serviceName: coursebook-ui
+              servicePort: 4004
+            path: /
+  tls:
+    # With this configuration kube-lego will generate a secret in namespace foo called `coursebook-tls`
+    # for the URL `coursebook.cloudgeni.us`
+    - hosts:
+        - "be.a.cloudgeni.us"
+      secretName: coursebook-ui-tls
