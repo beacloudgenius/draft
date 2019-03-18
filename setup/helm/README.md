@@ -74,7 +74,9 @@ cd example app
 draft create
 draft up
 
-Swap the templates/ingress.yaml and enable ingress in values.yaml 
+Swap the templates/ingress.yaml 
+set basedomain in values.yaml
+and enable ingress in values.yaml
 
 draft up
 
