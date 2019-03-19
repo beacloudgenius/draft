@@ -48,7 +48,13 @@ Because we’re using GKE, we can take advantage of GCP’s Container Repository
 
 ### Enable docker to login to gcr
 
+on VM
+
     cat $HOME/.creds/oceanic-isotope-233522-b030dceb4b1a.json | docker login -u _json_key --password-stdin https://gcr.io
+
+on imac
+
+    cat $HOME/.creds/oceanic-isotope-233522-772e92d508ce.json | docker login -u _json_key --password-stdin https://gcr.io
 
 Notes: https://cloud.google.com/container-registry/docs/advanced-authentication
 
@@ -56,6 +62,7 @@ and now… finally…
 
 ### initialize draft and set registry to point to gcr
 
+    rm -rf ~/.draft
     draft init
     draft config set registry gcr.io/oceanic-isotope-233522
 
@@ -99,20 +106,7 @@ open localhost:33587
 
 Update the Application
 
-Now, let's change the output in app.py to output "Hello, Cloud Genius!" instead:
-
-    \$ cat <<EOF > app.py
-    from flask import Flask
-
-    app = Flask(**name**)
-
-    @app.route("/")
-    def hello():
-    return "Hello, Cloud Genius!\n"
-
-    if **name** == "**main**":
-    app.run(host='0.0.0.0', port=8080)
-    EOF
+Now, let's change the app to output "Hello, Cloud Genius!" instead:
 
 draft up
 draft connect
@@ -121,29 +115,39 @@ draft delete
 
 ## Enable ingress
 
-Edit values.yaml
+cd example app
 
-```bash
+- Set basedomain workshop.cloudgeni.us in values.yaml and enable ingress in values.yaml
+
+```yaml
 ingress:
   enabled: true
 basedomain: workshop.cloudgeni.us
 ```
 
-## Enable TLS
+THEN
+
+draft up
+
+## Enable ingress with TLS
+
+Production:
 
     wget https://raw.githubusercontent.com/beacloudgenius/k8s-ingress-exercise/master/ingress-nginx/cluster-issuer.yaml
 
-Edit this `cluster-issuer.yaml` file
+Staging - use this to avoid rate limit issue while you test everything out
 
-- use your email address not nilesh@cloudgeni.us
+    wget https://raw.githubusercontent.com/beacloudgenius/k8s-ingress-exercise/master/ingress-nginx/cluster-issuer-staging.yaml
 
-- change to staging TLS to avoid rate limit issue during testing.
+For testing, you also need to install a fake root cert from https://letsencrypt.org/docs/staging-environment/
 
-  https://acme-staging-v02.api.letsencrypt.org/directory
+REMEMBER:
 
-- and install fake root from https://letsencrypt.org/docs/staging-environment/
+    Edit this cluster-issuer file before using - use your email address not nilesh@cloudgeni.us
 
 ## Change app.yaml to request TLS cert
+
+METHOD 1:
 
 cd example app
 
@@ -157,7 +161,9 @@ ingress:
 basedomain: workshop.cloudgeni.us
 ```
 
-or handle ingress via values.yaml like this.
+METHOD 2:
+
+handle ingress via values.yaml like this.
 
 ```yaml
 ingress:
@@ -181,6 +187,6 @@ debug helm indentation if needed with a dry run
 
     helm install --debug --dry-run ./charts/example-erlang
 
-then
+THEN
 
 draft up
